@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MindSense – Depression Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────────────────────── */
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2333;
+      --border:    #30363d;
+      --accent:    #6ea8fe;
+      --accent2:   #a371f7;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --green:     #3fb950;
+      --yellow:    #d29922;
+      --orange:    #f0883e;
+      --red:       #f85149;
+      --purple:    #a371f7;
+      --radius:    12px;
+      --shadow:    0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #161b22 0%, #1c2333 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    header h1 {
+        font-family: 'DM Serif Display', serif;
+        font-size: 1.5rem;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        
+        /* Standard */
+        background-clip: text;
+
+        /* Webkit (Chrome, Safari) */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+
+        /* Fallback */
+        color: transparent;
+    }
+
+    header p { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
+    .header-badge {
+      margin-left: auto;
+      background: rgba(110,168,254,0.12);
+      border: 1px solid rgba(110,168,254,0.3);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────────────────────── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* ── PANELS ─────────────────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .panel-header h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+    }
+
+    .panel-header .icon {
+      font-size: 1.2rem;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(110,168,254,0.1);
+      border-radius: 8px;
+    }
+
+    .step-badge {
+      margin-left: auto;
+      background: rgba(163,113,247,0.15);
+      color: var(--accent2);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    /* ── PHQ-9 FORM ─────────────────────────────────────────────────────── */
+    .phq-body { padding: 20px 24px; }
+
+    .phq-intro {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 18px;
+      line-height: 1.6;
+      padding: 10px 14px;
+      background: rgba(110,168,254,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .question-item {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+
+    .question-item:hover { border-color: rgba(110,168,254,0.3); }
+    .question-item.answered { border-color: rgba(63,185,80,0.4); }
+
+    .question-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .question-text {
+      font-size: 0.87rem;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .opt-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 7px 4px;
+      font-size: 0.75rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .opt-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .opt-btn.selected {
+      background: rgba(110,168,254,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      padding: 0 24px 20px;
+    }
+    .progress-bar-bg {
+      background: var(--surface2);
+      border-radius: 10px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Submit button */
+    .submit-area {
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0d1117;
+      font-weight: 700;
+      font-size: 0.9rem;
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── CHAT PANEL ─────────────────────────────────────────────────────── */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 520px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg {
+      max-width: 82%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      animation: fadeSlideIn 0.25s ease;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.bot {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg.user {
+      background: rgba(110,168,254,0.15);
+      border: 1px solid rgba(110,168,254,0.25);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.crisis {
+      background: rgba(248,81,73,0.1);
+      border-color: rgba(248,81,73,0.4);
+      color: #ffa198;
+    }
+
+    .msg .sender {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+
+    .msg.bot .sender { color: var(--accent); }
+    .msg.user .sender { color: var(--accent2); }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      align-self: flex-start;
+    }
+
+    .typing-dot {
+      width: 7px; height: 7px;
+      background: var(--muted);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-6px); }
+    }
+
+    /* Chat input */
+    .chat-input-area {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: rgba(255,255,255,0.01);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.87rem;
+      resize: none;
+      outline: none;
+      min-height: 42px;
+      max-height: 120px;
+      transition: border-color 0.2s;
+      line-height: 1.5;
+    }
+
+    .chat-input:focus { border-color: var(--accent); }
+    .chat-input::placeholder { color: var(--muted); }
+
+    .icon-btn {
+      width: 42px; height: 42px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s;
+      flex-shrink: 0;
+    }
+
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .icon-btn.active {
+      background: rgba(248,81,73,0.15);
+      border-color: var(--red);
+      color: var(--red);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(248,81,73,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(248,81,73,0); }
+    }
+
+    .send-btn {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 10px;
+      color: #0d1117;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.18s, transform 0.1s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .send-btn:active { transform: translateY(0); }
+
+    /* ── RESULTS PANEL ──────────────────────────────────────────────────── */
+    .results-panel {
+      grid-column: 1 / -1;
+      display: none;
+    }
+
+    .results-panel.visible { display: block; }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      transition: transform 0.2s;
+    }
+
+    .result-card:hover { transform: translateY(-2px); }
+
+    .result-card .label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .result-card .value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      line-height: 1.1;
+    }
+
+    .result-card .sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Gauge */
+    .gauge-wrap {
+      grid-column: 1 / -1;
+      padding: 0 24px 24px;
+    }
+
+    .gauge-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .gauge-bar-bg {
+      height: 12px;
+      background: var(--surface2);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .gauge-bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 1s ease;
+      width: 0%;
+    }
+
+    .gauge-ticks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+    }
+
+    .gauge-ticks span {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    /* Memberships chart */
+    .memberships-wrap {
+      padding: 0 24px 24px;
+    }
+
+    .membership-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .membership-row .mlabel {
+      width: 150px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .membership-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .membership-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.8s ease;
+    }
+
+    .membership-row .mval {
+      width: 36px;
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--text);
+    }
+
+    /* Recommendations */
+    .recs-wrap {
+      padding: 0 24px 24px;
+    }
+
+    .rec-section {
+      margin-bottom: 20px;
+    }
+
+    .rec-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rec-list li {
+      list-style: none;
+      padding: 7px 0 7px 16px;
+      border-left: 2px solid var(--border);
+      font-size: 0.83rem;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    .rec-list.crisis li { border-color: var(--red); }
+
+    .crisis-banner {
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .crisis-icon { font-size: 1.4rem; }
+
+    .crisis-text h4 {
+      color: var(--red);
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .crisis-text p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 24px 20px;
+    }
+
+    .section-title {
+      padding: 0 24px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── MIC STATUS ─────────────────────────────────────────────────────── */
+    .mic-status {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 4px 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .mic-status.listening {
+      color: var(--red);
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* Scrollable PHQ */
+    .phq-scroll {
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    /* Loader */
+    .loader {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo-icon">🧠</div>
+  <div>
+    <h1>MindSense</h1>
+    <p>AI-Powered Depression Assessment</p>
+  </div>
+  <span class="header-badge">PHQ-9 + AI Analysis</span>
+</header>
+
+<!-- ── MAIN ────────────────────────────────────────────────────────────────── -->
+<div class="container">
+
+  <!-- ── LEFT: PHQ-9 ───────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="icon">📋</div>
+      <div>
+        <h2>PHQ-9 Assessment</h2>
+        <p style="color:var(--muted);font-size:0.75rem;">Patient Health Questionnaire</p>
+      </div>
+      <span class="step-badge">Step 1</span>
+    </div>
+
+    <div class="phq-body">
+      <p class="phq-intro">
+        Over the <strong>last 2 weeks</strong>, how often have you been bothered
+        by the following problems?
+      </p>
+
+      <div class="phq-scroll" id="phqQuestions"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progressText">0 of 9 answered</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <button class="btn-primary" id="submitPHQ" disabled onclick="submitPHQ9()">
+        Analyse PHQ-9 Responses
+      </button>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: CHAT ───────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="icon">💬</div>
+      <div>
+        <h2>How Are You Feeling?</h2>
+        <p style="color:var(--muted);font-size:0.75rem;">Share your thoughts freely</p>
+      </div>
+      <span class="step-badge">Step 2</span>
+    </div>
+
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg bot">
+          <div class="sender">MindSense</div>
+          Hello. I'm here to listen and help assess how you're feeling.
+          Please complete the PHQ-9 questionnaire on the left, and feel free
+          to tell me anything that's on your mind here. 💙
+        </div>
+      </div>
+
+      <div class="mic-status" id="micStatus"></div>
+
+      <div class="chat-input-area">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Tell me how you're feeling..."
+          rows="1"
+          onkeydown="handleKeydown(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="icon-btn" id="micBtn" title="Voice input" onclick="toggleMic()">🎙</button>
+        <button class="send-btn" onclick="sendMessage()" title="Send">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS (full width, hidden until ready) ─────────────────────────── -->
+  <div class="panel results-panel" id="resultsPanel">
+    <div class="panel-header">
+      <div class="icon">📊</div>
+      <h2>Analysis Results</h2>
+      <span class="step-badge" id="urgencyBadge" style="margin-left:auto">—</span>
+    </div>
+
+    <!-- Score cards -->
+    <div class="results-grid" id="resultsGrid"></div>
+
+    <!-- Severity gauge -->
+    <div class="gauge-wrap">
+      <div class="gauge-label">Overall Depression Severity</div>
+      <div class="gauge-bar-bg">
+        <div class="gauge-bar-fill" id="gaugeFill"></div>
+      </div>
+      <div class="gauge-ticks">
+        <span>Minimal</span>
+        <span>Mild</span>
+        <span>Moderate</span>
+        <span>Mod. Severe</span>
+        <span>Severe</span>
+      </div>
+    </div>
+
+    <!-- Fuzzy memberships -->
+    <div class="section-title">Fuzzy Membership Degrees (PHQ-9)</div>
+    <div class="memberships-wrap" id="membershipsWrap"></div>
+
+    <div class="divider"></div>
+
+    <!-- Recommendations -->
+    <div class="section-title">Recommendations & Resources</div>
+    <div class="recs-wrap" id="recsWrap"></div>
+  </div>
+
+</div>
+
+<!-- ── SCRIPT ───────────────────────────────────────────────────────────────── -->
+<script>
+const API = "http://127.0.0.1:8000";
+
+// ── PHQ-9 Questions ─────────────────────────────────────────────────────────
+const PHQ9_QUESTIONS = [
+  "Little interest or pleasure in doing things",
+  "Feeling down, depressed, or hopeless",
+  "Trouble falling or staying asleep, or sleeping too much",
+  "Feeling tired or having little energy",
+  "Poor appetite or overeating",
+  "Feeling bad about yourself — or that you are a failure or have let yourself or your family down",
+  "Trouble concentrating on things, such as reading the newspaper or watching television",
+  "Moving or speaking so slowly that other people could have noticed, or being fidgety/restless",
+  "Thoughts that you would be better off dead, or of hurting yourself in some way",
+];
+
+const OPTIONS = [
+  { label: "Not at all",              score: 0 },
+  { label: "Several days",            score: 1 },
+  { label: "More than half the days", score: 2 },
+  { label: "Nearly every day",        score: 3 },
+];
+
+const MEMBERSHIP_COLORS = {
+  "Minimal":           "#3fb950",
+  "Mild":              "#d29922",
+  "Moderate":          "#f0883e",
+  "Moderately Severe": "#f85149",
+  "Severe":            "#a371f7",
+};
+
+// State
+let phq9Answers   = new Array(9).fill(null);
+let chatHistory   = [];
+let recognition   = null;
+let isListening   = false;
+
+// ── Render PHQ-9 ────────────────────────────────────────────────────────────
+function renderPHQ9() {
+  const wrap = document.getElementById('phqQuestions');
+  wrap.innerHTML = PHQ9_QUESTIONS.map((q, i) => `
+    <div class="question-item" id="qi-${i}">
+      <div class="question-num">Q${i+1}${i === 8 ? ' ⚠️' : ''}</div>
+      <div class="question-text">${q}</div>
+      <div class="options" id="opts-${i}">
+        ${OPTIONS.map(opt => `
+          <button class="opt-btn" onclick="selectOption(${i}, ${opt.score}, this)">
+            <strong>${opt.score}</strong><br/>${opt.label}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectOption(qIndex, score, btn) {
+  // Deselect all in row
+  document.querySelectorAll(`#opts-${qIndex} .opt-btn`).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  phq9Answers[qIndex] = score;
+  document.getElementById(`qi-${qIndex}`).classList.add('answered');
+  updateProgress();
+}
+
+function updateProgress() {
+  const answered = phq9Answers.filter(a => a !== null).length;
+  const pct      = Math.round(answered / 9 * 100);
+  document.getElementById('progressText').textContent = `${answered} of 9 answered`;
+  document.getElementById('progressPct').textContent  = `${pct}%`;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+  document.getElementById('submitPHQ').disabled       = answered < 9;
+}
+
+// ── Submit PHQ-9 ────────────────────────────────────────────────────────────
+async function submitPHQ9() {
+  const btn = document.getElementById('submitPHQ');
+  btn.innerHTML = '<span class="loader"></span>Analysing...';
+  btn.disabled  = true;
+
+  addBotMessage("I've received your PHQ-9 responses. Let me analyse them together with our conversation... ⏳");
+
+  const latestMsg = chatHistory.length
+    ? chatHistory[chatHistory.length - 1]
+    : "I have completed the PHQ-9 questionnaire.";
+
+  try {
+    const res = await fetch(`${API}/analyze/full`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        phq9_responses: phq9Answers,
+        chat_history:   chatHistory,
+        latest_message: latestMsg,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    renderResults(data);
+
+    // Show bot response
+    const msgClass = data.is_crisis ? 'crisis' : '';
+    addBotMessage(data.bot_response, msgClass);
+
+    btn.innerHTML = '✓ Analysis Complete';
+    btn.style.background = 'var(--green)';
+
+  } catch (err) {
+    addBotMessage(`⚠️ Could not connect to the analysis server. Please ensure the backend is running on port 8000.\n\nError: ${err.message}`);
+    btn.innerHTML = 'Retry Analysis';
+    btn.disabled  = false;
+    btn.style.background = '';
+  }
+}
+
+// ── Render Results ──────────────────────────────────────────────────────────
+function renderResults(data) {
+  const panel = document.getElementById('resultsPanel');
+  panel.classList.add('visible');
+
+  // Scroll to results
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+
+  // Urgency badge
+  const badge = document.getElementById('urgencyBadge');
+  badge.textContent = data.urgency;
+  badge.style.background = `${data.color}22`;
+  badge.style.color      = data.color;
+  badge.style.border     = `1px solid ${data.color}55`;
+
+  // Score cards
+  document.getElementById('resultsGrid').innerHTML = `
+    <div class="result-card">
+      <div class="label">Final Score</div>
+      <div class="value" style="color:${data.color}">${data.final_score}</div>
+      <div class="sub">out of 100</div>
+    </div>
+    <div class="result-card">
+      <div class="label">Diagnosis</div>
+      <div class="value" style="font-size:1.1rem;color:${data.color}">${data.final_label}</div>
+      <div class="sub">${data.phq9_label}</div>
+    </div>
+    <div class="result-card">
+      <div class="label">PHQ-9 Raw</div>
+      <div class="value">${data.phq9_severity_index.toFixed(0)}</div>
+      <div class="sub">Severity Index / 100</div>
+    </div>
+    <div class="result-card">
+      <div class="label">Chat Sentiment</div>
+      <div class="value" style="font-size:1rem">${data.sentiment_signal.replace(' Signal','')}</div>
+      <div class="sub">Score: ${(data.sentiment_score * 100).toFixed(0)}%</div>
+    </div>
+  `;
+
+  // Gauge
+  const gauge = document.getElementById('gaugeFill');
+  gauge.style.background = `linear-gradient(90deg, #3fb950, ${data.color})`;
+  setTimeout(() => gauge.style.width = `${data.final_score}%`, 100);
+
+  // Memberships
+  const mWrap = document.getElementById('membershipsWrap');
+  mWrap.innerHTML = Object.entries(data.memberships).map(([label, val]) => `
+    <div class="membership-row">
+      <div class="mlabel">${label}</div>
+      <div class="membership-bar">
+        <div class="membership-fill"
+          style="width:0%;background:${MEMBERSHIP_COLORS[label] || '#6ea8fe'}"
+          data-target="${val * 100}">
+        </div>
+      </div>
+      <div class="mval">${(val * 100).toFixed(0)}%</div>
+    </div>
+  `).join('');
+
+  // Animate membership bars
+  setTimeout(() => {
+    document.querySelectorAll('.membership-fill').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+    });
+  }, 200);
+
+  // Recommendations
+  const rWrap   = document.getElementById('recsWrap');
+  const crisis  = data.is_crisis;
+  rWrap.innerHTML = `
+    ${crisis ? `
+      <div class="crisis-banner">
+        <div class="crisis-icon">🚨</div>
+        <div class="crisis-text">
+          <h4>Immediate Support Recommended</h4>
+          <p>Your responses indicate you may need immediate professional support. Please reach out to one of the resources below.</p>
+        </div>
+      </div>` : ''}
+
+    <div class="rec-section">
+      <div class="rec-title">📌 Summary</div>
+      <p style="font-size:0.84rem;color:var(--muted);line-height:1.6">${data.summary}</p>
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-title">⚡ Immediate Steps</div>
+      <ul class="rec-list ${crisis ? 'crisis' : ''}">
+        ${data.immediate_actions.map(a => `<li>${a}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-title">🌿 Lifestyle</div>
+      <ul class="rec-list">
+        ${data.lifestyle_tips.map(t => `<li>${t}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-title">🩺 Professional Advice</div>
+      <p style="font-size:0.83rem;color:var(--muted);line-height:1.6;padding-left:14px;border-left:2px solid var(--accent2)">${data.professional_advice}</p>
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-title">📞 Resources & Helplines</div>
+      <ul class="rec-list ${crisis ? 'crisis' : ''}">
+        ${data.resources.map(r => `<li>${r}</li>`).join('')}
+      </ul>
+    </div>
+
+    ${data.chat_trajectory ? `
+      <div style="margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:0.8rem;color:var(--muted)">
+        📈 Conversation trajectory: <strong style="color:var(--text)">${data.chat_trajectory}</strong>
+      </div>` : ''}
+  `;
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────────
+function addMessage(text, role, extraClass = '') {
+  const wrap = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = `msg ${role} ${extraClass}`;
+  div.innerHTML = `<div class="sender">${role === 'bot' ? 'MindSense' : 'You'}</div>${text.replace(/\n/g,'<br>')}`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function addBotMessage(text, extraClass = '') { addMessage(text, 'bot', extraClass); }
+function addUserMessage(text) { addMessage(text, 'user'); }
+
+function showTyping() {
+  const wrap = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = 'typing-indicator';
+  div.id = 'typingIndicator';
+  div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  const input   = document.getElementById('chatInput');
+  const text    = input.value.trim();
+  if (!text) return;
+
+  addUserMessage(text);
+  chatHistory.push(text);
+  input.value = '';
+  input.style.height = 'auto';
+
+  showTyping();
+
+  try {
+    const res  = await fetch(`${API}/analyze/chat`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ message: text }),
+    });
+    const data = await res.json();
+    hideTyping();
+
+    const signal = data.depression_signal || 'Analysed';
+    let reply    = `I hear you. `;
+    const score  = data.sentiment_score;
+
+    if (score < 0.25) {
+      reply += "It sounds like you're going through a really difficult time. You're not alone in this, and what you're feeling is valid. 💙";
+    } else if (score < 0.45) {
+      reply += "It seems like things have been weighing on you. Thank you for sharing that with me.";
+    } else if (score < 0.60) {
+      reply += "Thank you for sharing how you're feeling. I'm taking note of everything you've said.";
+    } else {
+      reply += "Thank you for sharing. I'm listening and here to support you.";
+    }
+
+    if (data.has_severe_keywords) {
+      reply += "\n\n🚨 I noticed some of what you said is concerning. Please reach out to a crisis helpline: AASRA 9820466627 or iCall 9152987821.";
+    }
+
+    addBotMessage(reply, data.has_severe_keywords ? 'crisis' : '');
+
+  } catch (err) {
+    hideTyping();
+    addBotMessage("⚠️ Could not reach the analysis server. Your message has been recorded. Please complete the PHQ-9 when ready.");
+    // Fallback: store message anyway
+  }
+}
+
+function handleKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── Voice Input (Web Speech API) ────────────────────────────────────────────
+function toggleMic() {
+  const micBtn    = document.getElementById('micBtn');
+  const micStatus = document.getElementById('micStatus');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    addBotMessage("⚠️ Voice input is not supported in your browser. Please use Chrome or Edge.");
+    return;
+  }
+
+  if (isListening) {
+    recognition.stop();
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang              = 'en-IN';
+  recognition.continuous        = false;
+  recognition.interimResults    = true;
+  recognition.maxAlternatives   = 1;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('active');
+    micStatus.textContent = '🔴 Listening... speak now';
+    micStatus.classList.add('listening');
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = Array.from(event.results)
+      .map(r => r[0].transcript).join('');
+    const isFinal    = event.results[event.results.length - 1].isFinal;
+    document.getElementById('chatInput').value = transcript;
+    if (isFinal) { recognition.stop(); }
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('active');
+    micStatus.textContent = '';
+    micStatus.classList.remove('listening');
+    const txt = document.getElementById('chatInput').value.trim();
+    if (txt) sendMessage();
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    micBtn.classList.remove('active');
+    micStatus.textContent = `Mic error: ${e.error}`;
+    setTimeout(() => micStatus.textContent = '', 3000);
+  };
+
+  recognition.start();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+renderPHQ9();
+</script>
+</body>
+</html>
