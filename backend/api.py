@@ -148,7 +148,7 @@ def serve_frontend():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "modules": ["phq9_scorer", "sentiment_analyzer", "classifier"]}
+    return {"message": "CI/CD working 🔥"}
 
 
 @app.post("/analyze/phq9", response_model=PHQ9Response)
