@@ -133,6 +133,17 @@ class FullAnalysisResponse(BaseModel):
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
+import os
+from fastapi.responses import FileResponse
+
+@app.get("/")
+def serve_frontend():
+    file_path = os.path.join(os.getcwd(), "frontend", "index.html")
+    
+    if not os.path.exists(file_path):
+        return {"error": "frontend file not found", "path": file_path}
+    
+    return FileResponse(file_path)
 
 @app.get("/health")
 async def health_check():
