@@ -29,5 +29,3 @@ jobs:
 
     - name: Restart Web App
       run: az webapp restart --name neurofuzzy-depression --resource-group neuro-rg
-
-      
