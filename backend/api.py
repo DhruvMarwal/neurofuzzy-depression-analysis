@@ -15,14 +15,6 @@ Run with:
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-from typing import Optional, List
-import tempfile
-import logging
-
 # Internal modules
 from phq9_scorer        import FuzzyPHQ9Scorer
 from genetic_algorithm  import get_default_weights
@@ -31,6 +23,13 @@ from depression_classifier import DepressionClassifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+from pydantic import BaseModel, Field
+from typing import Optional, List
+import tempfile
+import logging
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # ── App Setup ──────────────────────────────────────────────────────────────────
 app = FastAPI(
@@ -148,7 +147,7 @@ def serve_frontend():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"message": "CI/CD working 🔥"}
+    return {"message": "Test API is running", "status": "ok"}
 
 
 @app.post("/analyze/phq9", response_model=PHQ9Response)
